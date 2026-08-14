@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: HiveContext Serverless Infrastructure
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Environment:
+      Variables:
+        DATABASE_URL: !Ref DatabaseUrl
+        GEMINI_API_KEY: !Ref GeminiApiKey
+        EMBEDDING_PROVIDER: !Ref EmbeddingProvider
+        EMBEDDING_MODEL: !Ref EmbeddingModel
+        OPENAI_API_KEY: !Ref OpenAiApiKey
+        OPENAI_BASE_URL: !Ref OpenAiBaseUrl
+        MCP_SECRET_TOKEN: !Ref McpSecretToken
+        AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
+        AWS_LAMBDA_EXEC_WRAPPER: /opt/bootstrap
+        PORT: "8000"
+
+Parameters:
+  DatabaseUrl:
+    Type: String
+    Description: CockroachDB connection string
+  GeminiApiKey:
+    Type: String
+    Description: Gemini API Key for vector embeddings
+  EmbeddingProvider:
+    Type: String
+    Default: gemini
+    AllowedValues:
+      - gemini
+      - bedrock
+      - openai
+    Description: Server-owned provider used to generate vector embeddings
+  EmbeddingModel:
+    Type: String
+    Default: ''
+    Description: Optional provider-specific embedding model override
+  OpenAiApiKey:
+    Type: String
+    Default: ''
+    NoEcho: true
+    Description: API key for the selected OpenAI-compatible provider
+  OpenAiBaseUrl:
+    Type: String
+    Default: ''
+    Description: Base URL for an OpenAI-compatible embeddings API
+  McpSecretToken:
+    Type: String
+    Description: Bearer token required to access the MCP server
+
+Resources:
+  McpServerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: mcp_server/
+      Handler: run.sh
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Layers:
+        - !Sub arn:aws:lambda:${AWS::Region}:753240598075:layer:LambdaAdapterLayerX86:23
+      FunctionUrlConfig:
+        AuthType: NONE
+        InvokeMode: RESPONSE_STREAM
+
+  BackgroundPurgeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: background_purge/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Architectures:
+        - x86_64
+      Events:
+        DailyPurgeSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: 'rate(1 day)'
+            Name: HiveContextDailyPurge
+            Description: Triggers the memory purge daily
+
+Outputs:
+  McpServerUrl:
+    Description: "Function URL for MCP Server (Append /sse for client connection)"
+    Value: !GetAtt McpServerFunctionUrl.FunctionUrl

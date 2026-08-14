@@ -1,0 +1,12 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "hivecontext-server"
+resolve_s3 = true
+s3_prefix = "hivecontext-server"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "DatabaseUrl=\"\" GeminiApiKey=\"\" McpSecretToken=\"\""
+image_repositories = []
+
+[default.global.parameters]
+region = "ap-south-1"

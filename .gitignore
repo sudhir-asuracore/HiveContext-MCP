@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+samconfig.toml
+!samconfig.toml.example
+__pycache__/
+*.pyc
+.aws-sam/
+venv/
+test_venv/
+*.log
+.venv/
+.venv2/
+.pytest_cache/
+.idea/
+

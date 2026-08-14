@@ -1,0 +1,63 @@
+# AGENTS.md Template for HiveContext Collective Memory Integration
+
+Copy this file to `AGENTS.md` (or append its contents to your project's `AGENTS.md` or system prompt) to instruct AI coding agents (Antigravity, Claude, Cursor, Windsurf, etc.) to actively retrieve and persist collective memory via the HiveContext MCP server.
+
+---
+
+```markdown
+# HiveContext Collective Memory & Governance Rules
+
+You are connected to **HiveContext**, a multi-tenant collective memory system powered by CockroachDB vector search. You MUST actively consult and contribute to this shared memory during your workflow.
+
+## 1. Pre-Task Context Search (ALWAYS RUN FIRST)
+Before starting complex tasks, debugging non-trivial errors, or configuring deployment setups:
+- Run `search_context(query)` on the `hivecontext` MCP server with relevant search keywords.
+- Retrieve team conventions, Architecture Decision Records (ADRs), post-mortems, and infrastructure context.
+- Respect and apply any existing active rules found in the retrieved context.
+
+## 2. Active Memory Persistence (WHEN GAINING LEARNINGS)
+Whenever you establish new project patterns, resolve non-trivial incidents, make key technical decisions, or document infrastructure specs, call the appropriate `hivecontext` MCP tool:
+
+- **Team Conventions & Style Rules**:
+  Call `remember_convention(topic, content)`
+  *Example*: `remember_convention("Next.js Server Actions", "Always validate inputs using Zod before mutating database state.")`
+
+- **Architecture Decision Records (ADRs)**:
+  Call `save_adr(title, decision, context, consequences)`
+  *Example*: `save_adr("Use CockroachDB pgvector", "Store embeddings in CockroachDB 24.1+ for global resilience instead of standalone Pinecone.", "Need global vector search with SQL transactional support.", "Single database tier simplifies deployment.")`
+
+- **Incident & Bug Retrospectives**:
+  Call `log_post_mortem(issue, resolution)`
+  *Example*: `log_post_mortem("AWS Amplify SSR Auth Cookies", "NextAuth session cookie failed on Amplify SSR due to proxy host mismatch. Fixed by setting trustHost: true in Auth.js config.")`
+
+- **Infrastructure & Deployment Specs**:
+  Call `save_infrastructure_context(component, configuration, dependencies)`
+  *Example*: `save_infrastructure_context("FastMCP AWS Lambda Server", "Deployed via AWS SAM on Python 3.12 runtime with HTTP SSE transport.", "Requires DATABASE_URL, GEMINI_API_KEY, and McpSecretToken parameters.")`
+
+## 3. Scoping & Memory Isolation
+- Pass `scope="global"` for organization-wide rules applicable across all codebases.
+- Pass `scope="project"` and include `project_name="<repo-name>"` for repository-specific context.
+
+## 4. Git Operational Safety
+- ALWAYS ask the user for explicit confirmation before running `git commit` or `git push`.
+```
+
+---
+
+## MCP Server Connection Setup
+
+Add the following configuration to your client's MCP configuration file (e.g., `mcp_config.json` or `.gemini/antigravity.json`):
+
+```json
+{
+  "mcpServers": {
+    "hivecontext": {
+      "serverUrl": "https://<your-lambda-url>.lambda-url.<region>.on.aws/",
+      "headers": {
+        "Authorization": "Bearer <your_mcp_secret_token>",
+        "X-HiveContext-Tenant": "<your_tenant_space_name>"
+      }
+    }
+  }
+}
+```

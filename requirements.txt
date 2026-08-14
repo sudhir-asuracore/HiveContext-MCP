@@ -1,0 +1,6 @@
+mcp
+psycopg2-binary
+google-genai
+boto3
+tenacity
+pydantic
