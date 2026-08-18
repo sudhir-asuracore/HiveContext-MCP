@@ -111,6 +111,16 @@ def search_context(query: str, limit: int = 5) -> str:
                 """, (limit,))
             
             rows = cur.fetchall()
+            
+            # Increment retrieval_count for all retrieved memories so telemetry updates in real-time
+            if rows:
+                retrieved_ids = [r[0] for r in rows]
+                cur.execute("""
+                    UPDATE hive_context
+                    SET retrieval_count = COALESCE(retrieval_count, 0) + 1
+                    WHERE id = ANY(%s);
+                """, (retrieved_ids,))
+            
             conn.close()
             
             results = [
